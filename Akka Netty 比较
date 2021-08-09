@@ -1,0 +1,24 @@
+Akka Netty 比较
+
+来自 <https://www.cnblogs.com/snow-man/p/13404011.html> 
+
+
+从Akka出现背景来说，它是基于Actor的RPC通信系统，它的核心概念也是Message，它是基于协程的，性能不容置疑；基于scala的偏函数，易用性也没有话说，但是它毕竟只是RPC通信，无法适用大的package/stream的数据传输，这也是Spark早期引入Netty的原因。
+ 
+那么Netty为什么可以取代Akka？首先不容置疑的是Akka可以做到的，Netty也可以做到，但是Netty可以做到，Akka却无法做到，原因是啥？在软件栈中，Akka相比Netty要Higher一点，它专门针对RPC做了很多事情，而Netty相比更加基础一点，可以为不同的应用层通信协议（RPC，FTP，HTTP等）提供支持，在早期的Akka版本，底层的NIO通信就是用的Netty；其次一个优雅的工程师是不会允许一个系统中容纳两套通信框架，恶心！最后，虽然Netty没有Akka协程级的性能优势，但是Netty内部高效的Reactor线程模型，无锁化的串行设计，高效的序列化，零拷贝，内存池等特性也保证了Netty不会存在性能问题。
+ 
+ 
+Spark基于这个思想在上述的Network的基础上实现一套自己的RPC Actor模型，从而取代Akka。其中RpcEndpoint对于Actor，RpcEndpointRef对应ActorRef，RpcEnv即对应了ActorSystem
+ 
+ 
+RpcEnv相对于ActorSystem：
+ 
+	• 首先它作为一个Server，它通过NettyRpcHandler来提供了Server的服务能力，
+	• 其次它作为RpcEndpoint的容器，它提供了setupEndpoint(name，endpoint)接口，从而实现将一个RpcEndpoint以一个Name对应关系注册到容器中，从而通过Server对外提供Service
+	• 最后它作为Client的适配器，它提供了setupEndpointRef/setupEndpointRefByURI接口，通过指定Server端的Host和PORT，并指定RpcEndpointName，从而获取一个与指定Endpoint通信的引用。
+ 
+RpcEndpointRef即为与相应Endpoint通信的引用，它对外暴露了send/ask等接口，实现将一个Message发送到Endpoint中。
+
+来自 <https://www.cnblogs.com/snow-man/p/13404011.html> 
+
+
