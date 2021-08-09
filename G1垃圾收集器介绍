@@ -1,0 +1,23 @@
+G1垃圾收集器介绍
+
+来自 <https://www.jianshu.com/p/0f1f5adffdc1> 
+
+
+
+G1设计目标
+1、与应用线程同时工作，几乎不需要stop the world
+2、采用复制算法，不产生内存碎片
+3、GC停顿可控制
+4、不牺牲系统吞吐量
+5、gc不要求额外的内存空间
+G1收集器堆结构
+heap被划分为一个一个相等的不连续的内存区域（regions），每个region都有一个分代角色：eden、surivor、old；对于每个角色的数量并没有强制的限定，也就是说堆每种分代内存的大小，可以动态变化；G1的最大特点就是高效的执行回收，优先去执行哪些大量对象可回收的区域。
+G1使用了gc停顿可预测的模型，来满足用户设定的gc停顿时间，根据用户设定的目标时间，G1会自动地选择哪些region要清除，一次清除多少个region；G1从多个region中复制存活的对象，然后集中放入一个region中，同时整理、清除内存。
+G1vs CMS
+CMS使用标记-清除算法，G1采用复制算法，前者会产生内存碎片
+对比Parallel Scavenge、Parallel Old收集器，Parallel会对整个区域整理导致gc停顿时间会较长，而G1只是特定的整理几个region
+G1并非一个实时的收集器，与Parallel Scavenge一样，对gc停顿时间的设置并不绝对生效，只是G1有较高的几率保证不超过设定的gc停顿时间。与之前的gc收集器对比，G1会根据用户设定的gc停顿时间，智能评估那几个region需要被回收可以满足用户的设定
+
+来自 <https://www.cnblogs.com/zhanhaitao/p/12980077.html> 
+
+
