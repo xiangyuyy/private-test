@@ -1,0 +1,39 @@
+32u 16g的虚机。
+集群迁移场景，一个region 大约400wlb 要迁移。
+后台服务是8台。
+
+之前设置17个核心，vmstat  jstack jmap
+cpu使用率不是很高,wa io等待时间长。
+增大线程数 提交cpu的使用率，上下文切换数，内存，io,和堆栈变化很平稳。
+
+
+迁移过程主要是网络io，调用各个服务的接口迁移。大约有18个接口，业务还是比较复杂。
+
+迁移过程是有用到线程池数量调优。
+ 
+ jstat -gc  26468 10000  gc情况
+
+jmap -heap  26468      堆情况
+
+jmap -histo:live 48204 
+jmap -histo:live 26468 |head -n 10     存货的前10位
+
+jmap -histo 48204|head -n 10 查看前10位
+jmap -histo 48204 | sort -k 2 -g -r |head -n 10 查看对象数最多的对象，按降序输出
+jmap -histo 48204 | sort -k 3 -g -r |head -n 10 查看内存的对象，按降序输出
+
+来自 <https://blog.csdn.net/MrHamster/article/details/107722841> 
+
+
+jmap -clstats 9068    ClassLoader 的信息
+
+来自 <https://www.jianshu.com/p/a4ad53179df3> 
+
+
+ 线程情况  jstack 
+ 
+
+
+
+
+
