@@ -1,0 +1,11 @@
+	1. HashSet   
+1)   HashSet不能够存储相同的元素，元素是否相同的判断：重写元素的equals方法。equals方法和hashCode方法必须兼容，如：equals方法判断的是用户的名字name，那么hashCode的返回的hashcode必须是name。hashcode（）；
+2)   HashSet存储是无序的，保存的顺序与添加的顺序是不一致的，它不是线性结构，而是散列结构，（通过散列表：散列单元指向链表）。因此，HashSet的查询效率相对比较高。
+3)   HashSet不是线程安全的，不是线程同步的。这需要自己实现线程同步：Collections.synchronizedCollection()，方法实现。
+2.ArrayList
+1)   ArrayList中存放顺序和添加顺序是一致的。并且可重复元素。
+2)   不是线程安全的，不是线程同步的。
+3)   ArrayList是通过可变大小的数组实现的，允许null在内的所有元素。
+4)   ArrayList适合通过位子来读取元素。
+
+来自 <https://blog.csdn.net/weixin_34198453/article/details/93486273> 
