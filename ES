@@ -1,0 +1,39 @@
+适合检索 和  统计
+
+
+es 写数据过程
+	• 客户端选择一个 node 发送请求过去，这个 node 就是 coordinating node（协调节点）。
+	• coordinating node 对 document 进行路由，将请求转发给对应的 node（有 primary shard）。[路由的算法是？]
+	• 实际的 node 上的 primary shard 处理请求，然后将数据同步到 replica node。
+	• coordinating node 如果发现 primary node 和所有 replica node 都搞定之后，就返回响应结果给客户端。
+
+es 读数据过程
+可以通过 doc id 来查询，会根据 doc id 进行 hash，判断出来当时把 doc id 分配到了哪个 shard 上面去，从那个 shard 去查询。
+	• 客户端发送请求到任意一个 node，成为 coordinate node。
+	• coordinate node 对 doc id 进行哈希路由，将请求转发到对应的 node，此时会使用 round-robin随机轮询算法，在 primary shard 以及其所有 replica 中随机选择一个，让读请求负载均衡。
+	• 接收请求的 node 返回 document 给 coordinate node。
+	• coordinate node 返回 document 给客户端。
+写请求是写入 primary shard，然后同步给所有的 replica shard；读请求可以从 primary shard 或 replica shard 读取，采用的是随机轮询算法。
+
+来自 <https://blog.csdn.net/abcd1101/article/details/89010070> 
+
+
+
+
+Elasticsearch和MongoDB/Redis/Memcache一样，是非关系型数据库。是一个接近实时的搜索平台，从索引这个文档到这个文档能够被搜索到只有一个轻微的延迟，企业应用定位：采用Restful API标准的可扩展和高可用的实时数据分析的全文搜索工具。
+
+来自 <https://blog.csdn.net/aisemi/article/details/80212836> 
+
+
+
+
+倒排索引
+
+来自 <https://zhuanlan.zhihu.com/p/266116262> 
+
+
+
+
+
+
+https://blog.csdn.net/weixin_44588495/article/details/105340593
