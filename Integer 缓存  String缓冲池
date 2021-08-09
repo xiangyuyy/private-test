@@ -1,0 +1,80 @@
+Integer.valueOf（a）
+
+Integer I =100 相当于Integer.valueOf（100）
+
+来自 <https://www.cnblogs.com/rouqinglangzi/p/8848607.html> 
+
+
+
+
+该类的作用是将数值等于-128-127(默认)区间的Integer实例缓存到cache数组中。通过valueOf()方法很明显发现，当再次创建值在-128-127区间的Integer实例时，会复用缓存中的实例，也就是直接指向缓存中的Integer实例。注意，这里的创建不包括用new创建，new创建对象不会复用缓存实例。
+ 
+Integer的默认缓存范围为-128到127，可以通过jvm参数改变这个范围。
+	• 缓存上界high可以通过jvm参数-XX:AutoBoxCacheMax=size指定，取指定值与127的最大值并且不超过Integer表示范围，
+	• 下界不能指定，只能为-128
+
+来自 <https://www.cnblogs.com/rouqinglangzi/p/8848607.html> 
+
+
+
+String池：String是不可改变的，为了提高效率Java引用了字符串池的概念，例如new String("abc");首先会在String池中创建一个对象“abc”因为有NEW的 存在所以会分配地址空间copyString池的内容。当出现的String对象在String池中不存在时即在String池中创建该对象。
+
+str = "String 1"
+
+str = "String 2"
+是重新新建（new）了一个字符串相当于
+str = new String("String 2");  // ( Java , C# )
+
+来自 <https://blog.csdn.net/kgojiwong/article/details/82287439> 
+
+
+
+来自 <https://blog.csdn.net/kgojiwong/article/details/82287439> 
+
+
+————————————————
+版权声明：本文为CSDN博主「zmywhhit」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/zmywhhit/article/details/18778157
+
+
+
+String 类是不可改变的，所以你一旦创建了 String 对象，那它的值就无法改变
+
+
+
+
+String 类是不可改变的解析，例如：
+
+String s = "Google";
+System.out.println("s = " + s);
+
+s = "Runoob";
+System.out.println("s = " + s);
+输出结果为：
+
+Google
+Runoob
+从结果上看是改变了，但为什么门说String对象是不可变的呢？
+
+原因在于实例中的 s 只是一个 String 对象的引用，并不是对象本身，当执行 s = "Runoob"; 创建了一个新的对象 "Runoob"，而原来的 "Google" 还存在于内存中。
+
+
+
+
+
+
+这里可以根据 jdk 的源码来分析。
+
+字符串实际上就是一个 char 数组，并且内部就是封装了一个 char 数组。
+
+并且这里 char 数组是被 final 修饰的:
+
+public final class String
+    implements java.io.Serializable, Comparable<String>, CharSequence {
+    /** The value is used for character storage. */
+    private final char value[];
+并且 String 中的所有的方法，都是对于 char 数组的改变，只要是对它的改变，方法内部都是返回一个新的 String 实例。
+
+https://blog.csdn.net/u010325193/article/details/79887719
+
+
