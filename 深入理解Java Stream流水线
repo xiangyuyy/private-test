@@ -1,0 +1,54 @@
+
+记录用户每一步的操作,当用户调用结束操作时将之前记录的操作叠加到一起在一次迭代中全部执行掉,
+
+
+
+
+1.
+操作如何记录
+
+
+
+图中通过Collection.stream()方法得到Head也就是stage0，紧接着调用一系列的中间操作，不断产生新的Stream。这些Stream对象以双向链表的形式组织在一起，构成整个流水线，由于每个Stage都记录了前一个Stage和本次的操作以及回调函数，依靠这种结构就能建立起对数据源的所有操作。这就是Stream记录操作的方式。
+
+来自 <https://www.cnblogs.com/CarpenterLee/p/6637118.html> 
+
+
+
+
+2.
+ 操作如何叠加
+
+上述代码看似复杂，其实逻辑很简单，就是将回调函数mapper包装到一个Sink当中。由于Stream.map()是一个无状态的中间操作，所以map()方法返回了一个StatelessOp内部类对象（一个新的Stream），调用这个新Stream的opWripSink()方法将得到一个包装了当前回调函数的Sink。
+
+来自 <https://www.cnblogs.com/CarpenterLee/p/6637118.html> 
+
+3.叠加之后的操作如何执行
+
+Sink完美封装了Stream每一步操作，并给出了[处理->转发]的模式来叠加操作。这一连串的齿轮已经咬合，就差最后一步拨动齿轮启动执行。是什么启动这一连串的操作呢？也许你已经想到了启动的原始动力就是结束操作(Terminal Operation)，一旦调用某个结束操作，就会触发整个流水线的执行。
+
+
+
+
+
+
+
+
+上述代码首先调用wrappedSink.begin()方法告诉Sink数据即将到来，然后调用spliterator.forEachRemaining()方法对数据进行迭代（Spliterator是容器的一种迭代器，参阅），最后调用wrappedSink.end()方法通知Sink数据处理结束。逻辑如此清晰。
+
+来自 <https://www.cnblogs.com/CarpenterLee/p/6637118.html> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
