@@ -1,0 +1,6 @@
+Constructor >> @Autowired >> @PostConstruct
+
+@PostConstruct应用场景：
+如果想在生成对象时候完成某些初始化操作，而偏偏这些初始化操作又依赖于依赖注入，那么就无法在构造函数中实现。为此，可以使用@PostConstruct注解一个方法来完成初始化，@PostConstruct注解的方法将会在依赖注入完成后被自动调用。
+
+来自 <https://www.cnblogs.com/mark5/p/12767120.html> 
