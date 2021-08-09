@@ -1,0 +1,9 @@
+binlog和Redo Log主要有以下三点不同:
+	1. Redo Log是InnoDB引擎特有的；binlog是MySQL的server层实现的，不管哪种引擎，都会有binlog。
+	2. Redo Log是物理日志，记录数据是怎么变化的；binlog是逻辑日志，记录的是语句的逻辑操作。
+	3. Redo Log是循环写的，空间固定会用完；binlog是追加写入的，文件写到一定大小后会切换到下一个，并不会覆盖以前的日志。
+
+作者：iomax
+链接：https://www.jianshu.com/p/65eb0526bfc0
+来源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
