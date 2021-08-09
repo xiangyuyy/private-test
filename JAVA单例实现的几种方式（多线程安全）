@@ -1,0 +1,140 @@
+直接初始化
+直接初始化final静态成员
+线程安全：JVM保证final静态成员只会被初始化一次
+公有静态成员是个final域，直接引用成员获取单例
+/**
+ * 公有静态成员是个final域
+ * 直接引用成员获取单例
+ */
+public class Singleton1 {
+    public static final Singleton1 INSTANCE = new Singleton1();
+/**
+     * 默认构造方法为private，避免用户用new构造出新对象
+     */
+    private Singleton1() {}
+public void someMethod() {}
+public static void main(String[] args) {
+        Singleton1.INSTANCE.someMethod();
+    }
+}
+公有的成员是个静态工厂方法，通过该方法获取单例。
+提供了灵活性，在不改变API的前提下，可以改变该类是否应该为单例的想法。
+比如改成为每个调用该方法的线程返回一个唯一的实例(ThreadLocal<T>)
+/**
+ * 公有的成员是个静态工厂方法，通过该方法获取单例
+ */
+public class Singleton2 {
+    private static final Singleton2 INSTANCE = new Singleton2();
+    /**
+     * 默认构造方法为private，避免用户用new构造出新对象
+     */
+    private Singleton2() {}
+/**
+     * 获取单例的静态工厂方法
+     * @return Singleton2 单例
+     */
+    public static Singleton2 getInstance() { return INSTANCE; }
+public void someMethod() {}
+public static void main(String[] args) {
+        Singleton2.getInstance().someMethod();
+    }
+}
+包含单个元素的枚举类型(enum)
+由枚举类型的性质保证枚举常量INSTANCE是唯一实例
+/**
+ * 一个包含单个元素的枚举类型
+ * 枚举类型保证每个枚举常量都是一个单例
+ */
+public enum EnumSingleton {
+    INSTANCE;
+    public void someMethod() { /** .... */}
+public static void main(String[] args) {
+        EnumSingleton.INSTANCE.someMethod();
+    }
+}
+延迟初始化
+直接在静态工厂方法上加 synchronized。缺点：每次调用都有线程开销
+/**
+ * 延迟初始化单例
+ */
+public class LazyInitSingleton1 {
+    private static LazyInitSingleton1 INSTANCE;
+    /**
+     * 默认构造方法为private，避免用户用new构造出新对象
+     */
+    private LazyInitSingleton1() {}
+/**
+     * 获取单例的静态工厂同步方法
+     * 延迟初始化单例
+     * 使用同步方法保证多线程操作只实例化一个实力
+     * @return LazyInitSingleton1 单例
+     */
+    public synchronized static LazyInitSingleton1 getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new LazyInitSingleton1();
+        }
+return INSTANCE;
+    }
+public void someMethod() {}
+public static void main(String[] args) {
+        Singleton2.getInstance().someMethod();
+    }
+}
+lazy initialization holder class 模式。（参考《Effective Java》第71条：慎用延迟初始化
+优点：避免同步方法的开销。
+getInstance第一次被调用时，读取SingletonHolder.field，导致SingletonHolder类得到初始化
+/**
+ * lazy initialization holder class 模式
+ * 避免同步方法的开销
+ */
+public class LazyInitSingleton2 {
+    private static class SingletonHolder {
+        static final LazyInitSingleton2 field = computeFieldValue();
+        private static LazyInitSingleton2 computeFieldValue() {
+            return new LazyInitSingleton2();
+        }
+    }
+private LazyInitSingleton2() {}
+    public static LazyInitSingleton2 getInstance() {
+        return SingletonHolder.field;
+    }
+}
+双重检测，降低同步方法开销。（参考《Effective Java》第71条：慎用延迟初始化）
+INSTANCE 使用 volatile 修饰符：防止JVM的即时编译器对INSTANCE = new LazyInitSingleton3()操作进行指令重排序。
+/**
+ * 延迟初始化，双重检测，降低同步方法开销
+ */
+public class LazyInitSingleton3 {
+    /**
+     * 注意：使用了 volatile 修饰符
+     */
+    private static volatile LazyInitSingleton3 INSTANCE;
+    private LazyInitSingleton3() {}
+    public static LazyInitSingleton3 getInstance() {
+        // 第一次判断无需同步，如果 INSTANCE 已经被初始化，
+        // 就直接返回，没有同步开销
+        if (INSTANCE == null) {
+            // 如果判断为空（多线程并发执行 getInstance，导致很多线程判断外层INSTANCE == NULL）
+            synchronized (LazyInitSingleton3.class) {
+                // 进入同步后再判断一次，
+                // 保证只有一个线程赋值给 INSTANCE，
+                // 后续进来执行的线程都会判断 INSTANCE != NULL，不会再赋值
+                if (INSTANCE == null) {
+                    INSTANCE = new LazyInitSingleton3();
+                }
+            }
+        }
+return INSTANCE;
+    }
+}
+为什么INSTANCE要使用volatile修饰符
+在JVM中，new操作做了下面3件事：
+	1. 给要new的对象LazyInitSingleton3分配内存空间
+	2. 调用LazyInitSingleton3的构造函数来初始化对象
+	3. 将INSTANCE指向步骤1中分配的内存空间
+由于JVM存在指令重排序的优化，上面第2步和第3步顺序是无法保证的（1-2-3或者1-3-2）。
+如果执行步骤是1-3-2，那么假设线程A执行到第3步，但第2步还未执行，此时线程B调用getInstance()发现INSTANCE非空（但未被初始化），直接返回INSTANCE，之后线程B对INSTANCE操作可能会发生错误（由于对象还未被初始化）。
+volatile修饰符防止指令重排序的优化，保证执行顺序是1-2-3。
+
+来自 <https://segmentfault.com/a/1190000014943280> 
+
