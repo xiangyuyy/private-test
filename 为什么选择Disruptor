@@ -1,0 +1,114 @@
+
+在Disruptor中有一个重要的类Sequence，该类包装了一个volatile修饰的long类型数据value，无论是Disruptor中的基于数组实现的缓冲区RingBuffer，还是生产者，消费者，都有各自独立的Sequence，RingBuffer缓冲区中，Sequence标示着写入进度，例如每次生产者要写入数据进缓冲区时，都要调用RingBuffer.next（）来获得下一个可使用的相对位置。对于生产者和消费者来说，Sequence标示着它们的事件序号，来看看Sequence类的源码：
+
+来自 <https://www.cnblogs.com/crazymakercircle/p/13909235.html> 
+
+
+
+
+
+1.控制器收到大量的kafka处理消息后 正对1个实例要有一定的处理顺序，先创建lb,在创建listener。保证业务时序。Quakr-elb调用接口获得数据不重复消费，elb对lb消费有顺序要求，必须保证一个消费者消费一个lb的信息，支持重复消费，但要保证针对一个lb通一个消费者消费。
+
+2.控制器收到大量的kafka处理消息后回去大量调用内部aip接口查询，需要进行流量的控制。
+3. Disruptor是一个优秀的发框架并，可以实现单个或多个生产者生产消息，单个或多个消费者消息，且消费者之间可以存在消费消息的依赖关系。
+
+对于独立消费的消费者，应当实现EventHandler接口。
+
+对于不重复消费的消费者，应当实现WorkHandler接口。
+
+Disruptor 相对于传统方式的优点：
+	• 无锁，没有竞争 
+	   写入数据可见的先后顺序是由线程所抢占的位置的先后顺序决定的，而不是由它的提交先后决定的。
+	 每个生产者或者消费者线程，会先申请可以操作的元素在数组中的位置，申请到之后，直接在该位置写入或者读取数据。CAS    java cas c直接去调用cpu的指令，在unsafe包下面。
+	  
+	来自 <https://tech.meituan.com/2016/11/18/disruptor.html> 
+	• 
+	• 所有访问者都记录自己的序号的实现方式，允许多个生产者与多个消费者共享相同的数据结构
+	• 缓存行填充，解决伪共享，提高cache命中率
+	• 环形数组RingBuffer，避免GC开销，  一次初始化， 
+	由于使用的是环形队列，那么队列创建时大小就被固定了，Disruptor框架中的环形队列本来也就是基于数组实现的，使用数组的话，减少了系统对内存空间管理的压力，因为它不像链表，Java会定期回收链表中一些不再引用的对象，而数组不会出现空间的新分配和回收问题。
+	
+	内存地址大概率是连续的，提高缓存命中率。
+	
+	来自 <https://www.jianshu.com/p/b4a7a83be4a2> 
+	
+	
+	
+	除此之外，在 Disruptor 中，生产者线程通过 publishEvent() 发布 Event 的时候，并不是创建一个新的 Event，而是通过 event.set() 方法修改 Event， 也就是说 RingBuffer 创建的 Event 是可以循环利用的，这样还能避免频繁创建、删除 Event 导致的频繁 GC 问题。
+	
+	作者：将代码写成诗
+	链接：https://www.jianshu.com/p/b4a7a83be4a2
+	来源：简书
+	著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+	
+	
+	来自 <https://www.cnblogs.com/crazymakercircle/p/13909235.html> 
+	
+
+来自 <https://www.cnblogs.com/aheizi/p/6883062.html> 
+
+
+
+对于伪共享，一般的解决方案是，增大数组元素的间隔使得由不同线程存取的元素位于不同的缓存行上，以空间换时间。
+
+备注：在jdk1.8中，有专门的注解@Contended来避免伪共享，更优雅地解决问题。
+
+
+来自 <https://tech.meituan.com/2016/11/18/disruptor.html> 
+
+
+Disruptor与BlockingQueue压力测试性能对比
+
+2倍性能提升，ArryBlockingQueue
+
+来自 <https://blog.csdn.net/danielzhou888/article/details/86683771> 
+
+
+
+来自 <https://blog.csdn.net/danielzhou888/article/details/86683771> 
+
+
+
+
+
+
+
+
+
+
+RingBuffer是什么
+RingBuffer 是一个环(首尾相连的环)，用做在不同上下文(线程)间传递数据的buffer。
+RingBuffer 拥有一个序号，这个序号指向数组中下一个可用元素。
+
+Disruptor使用环形队列的优势：
+Disruptor框架就是一个使用CAS操作的内存队列，与普通的队列不同，Disruptor框架使用的是一个基于数组实现的环形队列，无论是生产者向缓冲区里提交任务，还是消费者从缓冲区里获取任务执行，都使用CAS操作。
+使用环形队列的优势：
+第一，简化了多线程同步的复杂度。学数据结构的时候，实现队列都要两个指针head和tail来分别指向队列的头和尾，对于一般的队列是这样，想象下，如果有多个生产者同时往缓冲区队列中提交任务，某一生产者提交新任务后，tail指针都要做修改的，那么多个生产者提交任务，头指针不会做修改，但会对tail指针产生冲突，例如某一生产者P1要做写入操作，在获得tail指针指向的对象值V后，执行compareAndSet（）方法前，tail指针被另一生产者P2修改了，这时生产者P1执行compareAndSet（）方法，发现tail指针指向的值V和期望值E不同，导致冲突。同样，如果多个消费者不断从缓冲区中获取任务，不会修改尾指针，但会造成队列头指针head的冲突问题（因为队列的FIFO特点，出列会从头指针出开始）。
+环形队列的一个特点就是只有一个指针，只通过一个指针来实现出列和入列操作。如果使用两个指针head和tail来管理这个队列，有可能会出现“伪共享”问题（伪共享问题在下面我会详细说），因为创建队列时，head和tail指针变量常常在同一个缓存行中，多线程修改同一缓存行中的变量就容易出现伪共享问题。
+第二，由于使用的是环形队列，那么队列创建时大小就被固定了，Disruptor框架中的环形队列本来也就是基于数组实现的，使用数组的话，减少了系统对内存空间管理的压力，因为它不像链表，Java会定期回收链表中一些不再引用的对象，而数组不会出现空间的新分配和回收问题。
+原理：Disruptor的等待策略
+Disruptor默认的等待策略是BlockingWaitStrategy。这个策略的内部适用一个锁和条件变量来控制线程的执行和等待（Java基本的同步方法）。BlockingWaitStrategy是最慢的等待策略，但也是CPU使用率最低和最稳定的选项。然而，可以根据不同的部署环境调整选项以提高性能。
+SleepingWaitStrategy
+和BlockingWaitStrategy一样，SpleepingWaitStrategy的CPU使用率也比较低。它的方式是循环等待并且在循环中间调用LockSupport.parkNanos(1)来睡眠，（在Linux系统上面睡眠时间60µs）.然而，它的优点在于生产线程只需要计数，而不执行任何指令。并且没有条件变量的消耗。但是，事件对象从生产者到消费者传递的延迟变大了。SleepingWaitStrategy最好用在不需要低延迟，而且事件发布对于生产者的影响比较小的情况下。比如异步日志功能。
+YieldingWaitStrategy
+YieldingWaitStrategy是可以被用在低延迟系统中的两个策略之一，这种策略在减低系统延迟的同时也会增加CPU运算量。YieldingWaitStrategy策略会循环等待sequence增加到合适的值。循环中调用Thread.yield()允许其他准备好的线程执行。如果需要高性能而且事件消费者线程比逻辑内核少的时候，推荐使用YieldingWaitStrategy策略。例如：在开启超线程的时候。
+BusySpinW4aitStrategy
+BusySpinWaitStrategy是性能最高的等待策略，同时也是对部署环境要求最高的策略。这个性能最好用在事件处理线程比物理内核数目还要小的时候。例如：在禁用超线程技术的时候。
+原理：并行模式
+单一写者模式
+在并发系统中提高性能最好的方式之一就是单一写者原则，对Disruptor也是适用的。如果在你的代码中仅仅有一个事件生产者，那么可以设置为单一生产者模式来提高系统的性能。
+
+来自 <https://www.cnblogs.com/crazymakercircle/p/13909235.html> 
+
+
+环形数组结构是整个Disruptor的核心所在。
+首先因为是数组，所以要比链表快，而且根据我们对上面缓存行的解释知道，数组中的一个元素加载，相邻的数组元素也是会被预加载的，因此在这样的结构中，cpu无需时不时去主存加载数组中的下一个元素。而且，你可以为数组预先分配内存，使得数组对象一直存在（除非程序终止）。这就意味着不需要花大量的时间用于垃圾回收。此外，不像链表那样，需要为每一个添加到其上面的对象创造节点对象—对应的，当删除节点时，需要执行相应的内存清理操作。环形数组中的元素采用覆盖方式，避免了jvm的GC。
+其次结构作为环形，数组的大小为2的n次方，这样元素定位可以通过位运算效率会更高，这个跟一致性哈希中的环形策略有点像。在disruptor中，这个牛逼的环形结构就是RingBuffer，既然是数组，那么就有大小，而且这个大小必须是2的n次方，结构如下：
+————————————————
+版权声明：本文为CSDN博主「老柿子」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/zhouzhenyong/article/details/81303011
+
+
+
+
+
