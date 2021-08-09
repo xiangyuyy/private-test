@@ -1,0 +1,49 @@
+
+
+1. TreeMap是基于红黑树的一种提供排序访问的Map，和HashMap不同，它的get或put操作的时间复杂度是O(log(n))。具体的排序由指定的Comparator来决定，或者根据键key的具体顺序来决定。
+
+来自 <https://blog.csdn.net/u014231523/article/details/82320983> 
+
+
+不同于HashMap的哈希映射，TreeMap实现了红黑树的结构，形成了一颗二叉树。 一个是数组 结构 一个是树结构
+都是非线程安全的
+
+
+来自 <https://www.cnblogs.com/zhuxiaopijingjing/p/12365993.html> 
+
+
+
+
+HashTable是线程安全的，HashMap是线程不安全的。
+HashMap允许null key和null value，而hashtable不允许。
+HashTable继承的父类是Dictionary(字典的意思),而HashMap继承的父类是AbstractMap类。但两者实现的接口都一样。
+4、初始容量大小不同
+HashMap的初始容量是16，每一次创建一个map初始大小是往map里put值时才会开始初始容量大小。而HashTable的初始容量是11，每次new的时候就会初始这个容量。
+
+5、扩充容量大小不同
+HashMap扩充容量是原来容量的2倍，HashTable扩充容量是原来的2n+1倍。
+https://blog.csdn.net/weixin_47294072/article/details/107550919
+
+6、计算hash值的方法也不同
+/** HashTable源码 **/
+
+
+
+Hashtable直接使用对象自身的hashCode。hashCode是JDK根据对象的地址或者字符串或者数字算出来的int类型的数值。hash & 0x7FFFFFFF 是将哈希值变为正数，然后再使用除留余数发来获得最终的位置并映射到哈希表中。Hashtable在计算元素的位置时需要进行一次除法运算，而除法运算是比较耗时的。
+
+
+/** HashMap源码 **/
+
+
+
+‘>>>’是无符号右移操作，高位补0.
+
+hashmap	线程不安全	允许有null的键和值	效率高一点、	方法不是Synchronize的要提供外同步	有containsvalue和containsKey方法	HashMap 是Java1.2 引进的Map interface 的一个实现	HashMap是Hashtable的轻量级实现
+hashtable	线程安全	不允许有null的键和值	效率稍低、	方法是是Synchronize的	有contains方法方法	、Hashtable 继承于Dictionary 类	Hashtable 比HashMap 要旧
+
+来自 <https://www.cnblogs.com/langtianya/archive/2013/03/19/2970273.html> 
+
+
+
+
+
