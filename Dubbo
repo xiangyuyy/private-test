@@ -1,0 +1,20 @@
+Dubbo 
+一款高性能和透明化的prc分布式服务框架 实现了服务注册，发现，服务调用，通信，负载均衡等
+
+来自 <https://blog.csdn.net/qq_34592810/article/details/84398076> 
+
+
+
+dubbo之心跳机制
+
+
+https://www.jianshu.com/p/b79b098e4e63
+
+
+
+zookeeper提供了“心跳检测”功能，它会定时向各个服务提供者发送一个请求（实际上建立的是一个 socket 长连接），如果长期没有响应，服务中心就认为该服务提供者已经“挂了”，并将其剔除。
+
+服务消费方会监听zookeeper相应的路径，一旦路径上的数据有任何的变化，zookeeper就会将新的服务列表发送给消费方，消费方在获取到数据后，刷新本地缓存的列表
+
+https://blog.csdn.net/qq_28411869/article/details/95198290
+
