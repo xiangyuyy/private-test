@@ -1,0 +1,63 @@
+Nacos 服务端创建了相关的配置项后，客户端就可以进行监听了。
+客户端是通过一个定时任务来检查自己监听的配置项的数据的，一旦服务端的数据发生变化时，客户端将会获取到最新的数据，并将最新的数据保存在一个 CacheData 对象中，然后会重新计算 CacheData 的 md5 属性的值，此时就会对该 CacheData 所绑定的 Listener 触发 receiveConfigInfo 回调。
+考虑到服务端故障的问题，客户端将最新数据获取后会保存在本地的 snapshot 文件中，以后会优先从文件中获取配置信息的值。
+
+作者：逅弈
+链接：https://www.jianshu.com/p/38b5452c9fec
+来源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+
+
+Nacos 注册服务中心 配置中心  支持ap cp ，
+cp raft算 收到半选票成为新的leader节点   
+cp  Nacos类似Eureka是一个AP模式的服务发现框架，在Eureka集群模式下，Eureka采取的是Server之间互相广播各自的数据进行数据复制、更新操作；并且Eureka在客户端与注册中心出现网络故障时，依然能够获取服务注册信息——Eureka实现了客户端对于服务注册信息的缓存 (可能有误解)
+
+在Nacos中为了实现AP，自己定制了一套Distro协议
+
+来自 <https://blog.csdn.net/weixin_39605835/article/details/111169477> 
+
+
+
+Nacos类似Eureka 这是一种去中心化的架构，无 master/slave 之分，节点和节点之前都是互通的。每个节点都可被视为其他节点的副本
+
+他同时支持AP和CP模式，他根据服务注册选择临时和永久来决定走AP模式还是CP模式
+
+来自 <https://blog.csdn.net/m0_49654867/article/details/110624087> 
+
+
+
+来自 <https://blog.csdn.net/fly910905/article/details/100023415> 
+
+
+
+Ap，cp针对的是注册中心集群部署 leader是
+
+来自 <https://www.liaochuntao.cn/2019/05/09/java-web-32/> 
+
+
+
+
+3.选举 nacos
+Raft中使用心跳机制来出发leader选举。当服务器启动的时候，服务器成为follower。只要follower从leader或者candidate收到有效的RPCs就会保持follower状态。如果follower在一段时间内（该段时间被称为election timeout）没有收到消息，则它会假设当前没有可用的leader，然后开启选举新leader的流程。
+Term（任期）
+任期用连续的数字进行表示。每一个任期的开始都是一次选举(election)，在某些情况下，有可能没有选出Leader，那么，将会开始另一个任期，并且立刻开始下一次选举。Raft 算法保证在一个任期内只有一个Leader.
+过程
+1. follower增加当前的term；
+2. 转变为candidate；
+3. 向自己投票；
+4. 向其它节点发出投票请求。
+投票
+5. 发来投票请求 candidate 的 term 和 log 编号不能小于当前 candidate 的 term 和 log 编号；
+6. 当前 term 内 candidate 的票还没投递给自己(一个 term 内每个节点都只有一票 )；
+7. 接收到多个投票请求时，采取先到先得投递。
+结果
+当一个 Candidate 发出投票请求后会等待其它节点的响应结果。这个响应结果可能有三种情况：
+	• 收到过半选票，成为新的 leader。然后会将消息广播给所有其它节点，产生新 Leader 了（其中包含其当前的 term）；
+	• 接收到别的 candidate 发来的新 leader 通知，比较新 leader 的 term 是否不比当前的 term小，则自己转变为 follower；
+	• 没有收到过半选票，也没有收到新 leader 通知，则重新选举。
+	• 票数相同时，采取随机选举超时处理：让这些 candidate 的选举在一个给定范围值内，各自随机的 timeout 之后开始，此时先到达 timeout 的 candidate 会先发出投票请求，并优先获取到投票。
+
+来自 <https://www.cnblogs.com/lucky-yqy/p/14001329.html> 
+
+
