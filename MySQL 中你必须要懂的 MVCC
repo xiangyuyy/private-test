@@ -1,0 +1,146 @@
+
+为了支持事务，Innbodb引入了下面几个概念：
+
+redo log
+redo log就是保存执行的SQL语句到一个指定的Log文件，当Mysql执行recovery时重新执行redo log记录的SQL操作即可。当客户端执行每条SQL（更新语句）时，redo log会被首先写入log buffer；当客户端执行COMMIT命令时，log buffer中的内容会被视情况刷新到磁盘。redo log在磁盘上作为一个独立的文件存在，即Innodb的log文件。
+
+undo log
+与redo log相反，undo log是为回滚而用，具体内容就是copy事务前的数据库内容（行）到undo buffer，在适合的时间把undo buffer中的内容刷新到磁盘。undo buffer与redo buffer一样，也是环形缓冲，但当缓冲满的时候，undo buffer中的内容会也会被刷新到磁盘；与redo log不同的是，磁盘上不存在单独的undo log文件，所有的undo log均存放在主ibd数据文件中（表空间），即使客户端设置了每表一个数据文件也是如此。
+rollback segment
+回滚段这个概念来自Oracle的事物模型，在Innodb中，undo log被划分为多个段，具体某行的undo log就保存在某个段中，称为回滚段。可以认为undo log和回滚段是同一意思。
+
+锁
+Innodb提供了基于行的锁，如果行的数量非常大，则在高并发下锁的数量也可能会比较大，据Innodb文档说，Innodb对锁进行了空间有效优化，即使并发量高也不会导致内存耗尽。
+对行的锁有分两种：排他锁、共享锁。共享锁针对对，排他锁针对写，完全等同读写锁的概念。如果某个事务在更新某行（排他锁），则其他事物无论是读还是写本行都必须等待；如果某个事物读某行（共享锁），则其他读的事物无需等待，而写事物则需等待。通过共享锁，保证了多读之间的无等待性，但是锁的应用又依赖Mysql的事务隔离级别。
+
+隔离级别
+隔离级别用来限制事务直接的交互程度，目前有几个工业标准：
+- READ_UNCOMMITTED：脏读
+- READ_COMMITTED：读提交
+- REPEATABLE_READ：重复读
+- SERIALIZABLE：串行化
+Innodb对四种类型都支持，脏读和串行化应用场景不多，读提交、重复读用的比较广泛，后面会介绍其实现方式。
+————————————————
+版权声明：本文为CSDN博主「纯粹的码农」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/chen77716/article/details/6742128
+
+
+前言
+MySQL 是目前流行的开源数据库之一，各大公司都使用 MySQL 作为自家的关系型数据库，但是 MySQL 作为一个数据库而言，基本使用是非常简单的，只要会一点点建表语句（可以使用工具建表），一点点查询语句就可以使用 MySQL 来存储数据了。
+这种没有灵魂的操作，对于很多初学者来说也许已经是家常便饭了。但是对于一些已经有开发经验的人来说，这是远远不够的。你必须要学习很多数据库相关的知识，而这一篇就是彻底来剖析 MySQL 中的 MVCC 是如何实现的。
+看完这篇文章，你就可以知道各种隔离级别之下，MVCC 的作用是什么？MVCC 在什么时候会使用？怎么使用？
+示例表
+CREATE TABLE `test`.`Untitled`  (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `phone` char(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `age` int(3) NOT NULL,
+  `country` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_phone`(`phone`) USING BTREE,
+  INDEX `idx_name`(`name`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+• 1
+• 2
+• 3
+• 4
+• 5
+• 6
+• 7
+• 8
+• 9
+• 10
+insert into person values (null, '1351111111', 'any', 20, '蜀');
+insert into person values (null, '1351111112', 'bat', 21, '吴');
+• 1
+• 2
+
+MVCC
+MVCC 是无锁操作的一种实现方式，无锁就是没有锁。无锁能够大幅度提高数据库的并发性。它最基本的表现形式就是一致性非锁定读，通过 MVCC （多版本并发控制）来实现。MVCC 主要又是依靠 Read View 来实现的。
+在数据库中的每一条记录实际都会存在三个隐藏列：
+	• DB_TRX_ID：该列表示此记录的事务 ID
+	• DB_ROLL_PTR：该列表示一个指向回滚段的指针，实际就是指向该记录的一个版本链
+	• DB_ROW_ID：记录的 ID，如果有指定主键，那么该值就是主键。如果没有主键，那么就会使用定义的第一个唯一索引。如果没有唯一索引，那么就会默认生成一个值。
+start transaction;
+update person set age = 22 where id = 1;
+update person set name = 'out' where id = 1;
+commit;
+• 1
+• 2
+• 3
+• 4
+当执行完上面两条语句之后，但是还没有提交事务之前，它的版本链如下图所示：
+
+而 Read View 是用来判断每一个读取语句有资格读取版本链中的哪个记录。所以在在读取之前，都会生成一个 Read View。然后根据生成的 Read View 再去读取记录。
+在事务中，只有执行插入、更新、删除操作时才会分配到一个事务 id。如果事务只是一个单纯的读取事务，那么它的事务 id 就是默认的 0。
+Read View 的结构如下：
+	• rw_trx_ids：表示在生成 Read View 时，当前活跃的读写事务数组。
+	• min_trx_id：表示在生成 Read View 时，当前已提交的事务号 + 1，也就是在 rw_trx_ids 中的最小事务号。
+	• max_trx_id：表示在生成 Read View 时，当前已分配的事务号 + 1，也就是将要分配给下一个事务的事务号。
+	• curr_trx_id：创建 Read View 的当前事务 id。
+
+MySQL 会根据以下规则来判断版本链中的哪个版本（记录）是在事务中可见的：
+	• trx_id < min_trx_id，那么该记录则在当前事务可见，因为修改该版本记录的事务在当前事务生成 Read View 之前就已经提交。
+	• trx_id in (rw_trx_ids)，那么该记录在当前事务不可见，因为需改该版本记录的事务在当前事务生成 Read View 之前还未提交。
+	• trx_id > max_trx_id，那么该记录在当前事务不可见，因为修改该版本记录的事务在当前事务生成 Read View 之前还未开启。
+	• trx_id = curr_trx_id，那么该记录在当前事务可见，因为修改该版本记录的事务就是当前事务。
+例如：
+
+我们首先步骤 1 中开启了一个读取事务，因为它是一个只读事务，所以它的事务 id 为 0（以下简称事务 0）。紧接着我们在事务 0 中查询 id 为 1 的记录。此时，版本链如下：
+
+注意：跟红色表头连接在一起的记录都是在 B+ 树中的，而通过 roll_ptr 指针连接的记录都是存在于 undo log 中的。以下的所有版本链都是这种形式。
+READ UNCOMMITTED
+该隔离级别不会使用 MVCC。它只要执行 select，那么就会获取 B+ 树上最新的记录。而不管该记录的事务是否已经提交。
+READ COMMITTED
+在 READ COMMITTED 隔离级别下，会使用 MVCC。在开启一个读取事务之后，它会在每一个 select 操作之前都生成一个 Read View。
+因为步骤 2 中的 select 读取时，没有活跃的事务，也就表明所有的事务都是已经提交了的。所以它能读取到第一条记录。
+执行步骤 3， 开启一个新的事务，事务 id 为 101（以下检测事务 101）。
+执行步骤 4，它修改了 id 为 1 的记录，此时版本链将会变为如下：
+
+执行步骤 5，事务 0 执行了一个 select 操作，事务 0 会生成一个 Read View。Read View 的值如下：
+
+我们根据上面对版本链中的记录可见性规则：
+	• 版本链中的第一条记录，它的 trx_id 不小于 min_trx_id，所以该记录不可见。
+	• 版本链中的第二条记录，它的 trx_id 小于 min_trx_id，所以该记录可见。
+所以对于此次的查询，它能获得的记录就是：
+
+事务 101 在步骤 5 中执行了一个更新操作，执行步骤 6，提交该事务之后，版本链如下：
+
+执行步骤 7，我们在事务 0 中执行一次 select 查询，因为我们的隔离级别是 READ COMMITTED，所以此次查询也会生成一个 Read View。该 Read View 的值如下：
+
+然后根据版本链可见性规则：
+	• 因为没有活跃的事务，可知所有事务都已经提交，所以 rw_trx_ids 为空。
+	• 版本链第 1 条记录，它的 trx_id 小于 min_trx_id，所以此记录可见。
+那么这次的查询可以得到的记录如下所示：
+
+在事务 0 执行完查询之后，我们又开启了一个事务 id 为 102 的新事务（以下简称事务 102），该事务也对 id 为 1的记录进行了更新。
+步骤 9 中的查询自行分析。我们直接给出事务 102 执行完两条更新语句的最终版本链：
+
+执行步骤 11，根据版本链可见性规则，它能获取到的记录：
+
+REPEATABLE READ
+实际上，REPEATABLE READ 与 READ COMMITTED 的区别只有在生成 Read View 的时机上。
+READ COMMITTED 是在每次执行 select 操作时，都会生成一个新的 Read View。而 REPEATABLE READ 只会在第一次执行 select 操作时生成一个 Read View，直到该事务提交之前，所有的 select 操作都是使用第一次生成的 Read View。
+我们重新执行一下表中的步骤。
+首先，执行到步骤 2，事务 0 开启了事务之后，并执行一次 select 查询。此时会生成一个 Read View。该 Read View 的结构如下：
+
+生成的 Read View 将会一直使用，直到事务 0 提交。
+所以，尽管后面的开启了两个事务，并且对记录进行修改，使得最终的版本链变为如下所示：
+
+但是事务 0 依然只能读取到最开始的那条记录，也就是：
+
+不管事务 0 在任何时候执行 select * from person where id = 1; 读取记录，那么它都只会使用第一次生成的 Read View 在版本链中选择可以读取的记录。
+SERIALIZABLE
+该隔离级别不会使用 MVCC。如果使用的是普通的 select 语句，它会在该语句后面加上 lock in share mode，变为一致性锁定读。假设一个事务读取一条记录，其他事务对该记录的更改都会被阻塞。假设一个事务在更改一条记录，其他事务对该记录的读取都会被阻塞。
+在该隔离级别下，读写操作变为了串行操作。
+总结
+通过上面的文章，我们可以知道在 READ COMMITTED 和 REPEATABLE READ 隔离等级之下才会使用 MVCC。
+但是 READ COMMITTED 和 REPEATABLE READ 使用 MVCC 的方式各不相同：
+	• READ COMMITTED 是在每次执行 select 操作时都会生成一次 Read View。
+	• REPEATABLE READ 只有在第一次执行 select 操作时才会生成 Read View，后续的 select 操作都将使用第一次生成的 Read View。
+而 READ UNCOMMITTED 和 SERIALIZABLE 隔离级别不会使用 MVCC。
+它们的读取操作也不相同：
+	• READ UNCOMMITTED 每次执行 select 都会去读最新的记录。
+	• SERIALIZABLE 每次执行 select 操作都会在该语句后面加上 lock in share mode，使 select 变为一致性锁定读，将读写进行串行化。
+
+来自 <https://blog.csdn.net/qianlia/article/details/107015987> 
