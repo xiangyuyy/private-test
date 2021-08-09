@@ -1,0 +1,12 @@
+Google Guava工具包中的一个非常方便易用的本地化缓存实现，基于LRU算法实现，支持多种缓存过期策略。
+
+
+
+ EhCache 是一个纯Java的进程内缓存框架，具有快速、精干等特点，是Hibernate中默认的CacheProvider。
+
+
+
+Caffeine是使用Java8对Guava缓存的重写版本，在Spring Boot 2.0中将取代，基于LRU算法实现，支持多种缓存过期策略
+
+
+https://blog.csdn.net/ZhongGuoZhiChuang/article/details/80482451
