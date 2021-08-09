@@ -1,0 +1,57 @@
+1）它确保指令重排序时不会把其后面的指令排到内存屏障之前的位置，也不会把前面的指令排到内存屏障的后面；即在执行到内存屏障这句指令时，在它前面的操作已经全部完成；
+2）它会强制将对缓存的修改操作立即写入主存；
+3）如果是写操作，它会导致其他CPU中对应的缓存行无效。
+
+五.使用关键字的场景
+synchronized关键字是防止多个线程同时执行一段代码，那么就会很影响程序执行效率，而volatile关键字在某些情况下性能要优于synchronized，但是要注意volatile关键字是无法替代synchronized关键字的，因为volatile关键字无法保证操作的原子性。通常来说，使用volatile必须具备以下2个条件：
+1）对变量的写操作不依赖于当前值
+2）该变量没有包含在具有其他变量的不变式中
+实际上，这些条件表明，可以被写入 volatile 变量的这些有效值独立于任何程序的状态，包括变量的当前状态。
+事实上，我的理解就是上面的2个条件需要保证操作是原子性操作，才能保证使用volatile关键字的程序在并发时能够正确执行。
+
+volatile在字节码层面，就是使用访问标志：ACC_VOLATILE来表示
+
+来自 <https://zhuanlan.zhihu.com/p/133851347> 
+
+
+
+下面列举几个Java中使用volatile的几个场景。
+1.状态标记量
+
+1. volatile boolean flag = false;
+2. while(!flag){
+3. doSomething();
+4. }
+5. public void setFlag() {
+6. flag = true;
+7. }
+ 
+
+1. volatile boolean inited = false;
+2. //线程1:
+3. context = loadContext();   
+4. inited = true;             
+5. //线程2:
+6. while(!inited ){
+7. sleep() 
+8. }
+9. doSomethingwithconfig(context);
+ 
+2.double check
+
+1. class Singleton{
+2. private volatile static Singleton instance = null;
+3. private Singleton() {
+4. }
+5. public static Singleton getInstance() {
+6. if(instance==null) {
+7. synchronized (Singleton.class) {
+8. if(instance==null)
+9. instance = new Singleton();
+10. }
+11. }
+12. return instance;
+13. }
+
+
+来自 <https://blog.csdn.net/yinbucheng/article/details/71305951/> 
