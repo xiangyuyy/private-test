@@ -1,0 +1,15 @@
+
+tcpdump -i any host 184.6.0.106 -vve -w /home/fsp/chenxiangyu106.pcap
+
+tcpdump -i any port 9093 -vve -w /home/fsp/chenxiangyu9093.pcap  
+
+tcpdump后 用wiresshark 打开.pcap文件分析流 握手 和 发包信息
+
+追踪流查看流信息
+
+
+
+
+
+
+
