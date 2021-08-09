@@ -1,0 +1,14 @@
+Spring 如何保证线程安全
+杰哥长得帅关注
+0.3052018.03.28 08:55:24字数 574阅读 6,341
+Spring 的常见业务组件采取单例如何保证线程安全
+Spring 作为 IOC 框架，一般来说，Spring 管理的 controller、service、dao 都是单例存在，节省内存和 cpu、提高单机资源利用率（默认单例，配置多例模式使用 scope=prototype），既然是单例，那么如何控制单例被多个线程同时访问线程安全呢？
+首先要理解每个 http 请求到后台都是一个单独的线程，线程之间共享同一个进程的内存、io、cpu 等资源，但线程栈是线程独有，线程之间不共享栈资源
+其次，bean 分为有状态 bean 和无状态 bean，有状态 bean 即类定义了成员变量，可能被多个线程同时访问，则会出现线程安全问题；无状态 bean 每个线程访问不会产生线程安全问题，因为各个线程栈及方法栈资源都是独立的，不共享。即是，无状态 bean 可以在多线程环境下共享，有状态 bean 不能
+Spring 的 dao、service 层使用的有状态 bean 如何保证线程安全
+Spring 应用中 dao、service 一般以单例形式存在，dao、service 中使用的数据库 connection 以及 RequestContextHolder、TransactionSynchronizationManager、LocaleContextHolder 等都是有状态 bean，而 dao、service 又是单例，如何保证线程安全呢？
+答案是使用 threadLocal 进行处理，ThreadLocal 是线程本地变量，每个线程拥有变量的一个独立副本，所以各个线程之间互不影响，保证了线程安全
+SpringMVC 的 controller 并发访问
+SpringMVC 中的 controller 默认是单例的，那么如果不小心在类中定义了类变量，那么这个类变量是被所有请求共享的，这可能会造成多个请求修改该变量的值，出现与预期结果不符合的异常。所以如上所述，属性变量会到值线程安全问题，解决方法包括使用 threadLocal 或不使用属性变量、配置为多例均可（加锁控制效率不行）
+
+来自 <https://www.jianshu.com/p/e04491f3550f> 
