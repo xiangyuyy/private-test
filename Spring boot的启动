@@ -1,0 +1,52 @@
+Spring Boot基本上是Spring框架的扩展，它消除了设置Spring应用程序所需的XML配置，为更快，更高效的开发生态系统铺平了道路。
+Spring Boot中的一些特征：
+	1. 创建独立的Spring应用。
+	2. 嵌入式Tomcat、Jetty、 Undertow容器（无需部署war文件）。
+	3. 提供的starters 简化构建配置
+	4. 尽可能自动配置spring应用。
+	5. 提供生产指标,例如指标、健壮检查和外部化配置
+	6. 完全没有代码生成和XML配置要求
+
+作者：乐傻驴
+链接：https://www.jianshu.com/p/ffe5ebe17c3a
+来源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+
+
+回顾整体流程，Springboot的启动，主要创建了配置环境(environment)、事件监听(listeners)、应用上下文(applicationContext)，并基于以上条件，在容器中开始实例化我们需要的Bean，至此，通过SpringBoot启动的程序已经构造完成，接下来我们来探讨自动化配置是如何实现。
+
+来自 <https://www.cnblogs.com/cxy2020/p/12874847.html>
+
+
+
+
+
+
+
+https://blog.csdn.net/u010811939/article/details/80592461
+
+1.核心注解
+上面所有的注解都在做一件事：注册bean到spring容器。他们通过不同的条件不同的方式来完成：
+	• @SpringBootConfiguration 通过与 @Bean 结合完成Bean的 JavaConfig配置；
+	• @ComponentScan 通过范围扫描的方式，扫描特定注解注释的类，将其注册到Spring容器；
+	• @EnableAutoConfiguration 通过 spring.factories 的配置，并结合 @Condition 条件，完成bean的注册；
+	• @Import 通过导入的方式，将指定的class注册解析到Spring容器；
+
+
+
+
+2.Spring Boot 启动流程
+
+
+https://www.jianshu.com/p/dc12081b3598
+
+
+
+
+
+
+
+
+
+
