@@ -1,0 +1,26 @@
+rm -f /etc/yum.repos.d/fuxi-yum.repo 
+yum clean all
+yum install expect -y
+#!/bin/bash/expect -f
+expect -c "
+  spawn ssh-keygen -t rsa
+    expect {
+      \"*y/n*\" {send \"y\r\"; exp_continue}
+      \"*key*\" {send \"\r\"; exp_continue}
+      \"*passphrase*\" {send \"\r\"; exp_continue}
+      \"*again*\" {send \"\r\";}
+    }
+  "
+expect -c "
+    spawn ssh-copy-id root@10.246.156.228
+      expect {
+        \"*yes/no*\" {send \"yes\r\"; exp_continue}
+        \"*password*\" {send \"Hwsimg@sre2019\r\"; exp_continue}
+        \"*Password*\" {send \"Hwsimg@sre2019\r\";}
+      }
+    "
+echo "FUXI_CID_ARTIFACT is ${FUXI_CID_ARTIFACT}"
+nginx_pkg_url=`echo ${FUXI_CID_ARTIFACT} | awk '{match($0, /\"pkg_url\": ?\"([^\"]+)_all.tar.gz\"/, a); print a[1]}'`
+nginx_pkg_url=${nginx_pkg_url}_all.tar.gz
+echo "nginx_pkg_url is ${nginx_pkg_url}"
+ssh root@10.246.156.228 "sh /var/log/work/update_l2_nginx_cluster_version.sh ${nginx_pkg_url}"
