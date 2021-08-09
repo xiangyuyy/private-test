@@ -1,0 +1,79 @@
+静态代理     手动写代码实代理类，动态代理是运行时动态生成代理类。
+https://www.cnblogs.com/cC-Zhou/p/9525638.html
+
+
+
+AspectJ是静态代理的增强。所谓的静态代理，就是AOP框架会在编译阶段生成AOP代理类，因此也称为编译时增强。
+
+来自 <https://www.cnblogs.com/tian874540961/p/10812124.html> 
+
+
+
+使用Spring AOP
+
+来自 <https://www.cnblogs.com/tian874540961/p/10812124.html> 
+
+
+1.与AspectJ的静态代理不同，Spring AOP使用的是动态代理。所谓的动态代理，就是说AOP框架不会去修改字节码，而是在内存中临时为方法生成一个AOP对象，这个AOP对象包含了目标对象的全部方法，并且在特定的切点做了增强处理，并回调原对象的方法。
+2.Spring AOP中的动态代理，主要有两种方式：JDK动态代理和CGLIB动态代理。JDK动态代理通过“反射”来接收被代理的类，并且要求被代理的类必须实现一个接口。JDK动态代理的核心是InvocationHandler接口和Proxy类。如果目标类没有实现接口，那么Spring AOP会选择使用CGLIB来动态代理目标类。
+3.CGLIB（Code Generation Library），是一个代码生成的类库，可以在运行时动态地生成某个类的子类。注意，CGLIB是通过继承的方式做的动态代理，因此如果某个类被标记为final，那么它是无法使用CGLIB做动态代理的。
+
+来自 <https://www.cnblogs.com/tian874540961/p/10812124.html> 
+
+
+
+SpringBoot 2.x  默认gclib   如何修改 AOP 实现
+#在application.properties文件中通过spring.aop.proxy-target-class来配置 spring.aop.proxy-target-class=false
+
+来自 <https://blog.csdn.net/weixin_41325595/article/details/103576207> 
+
+
+
+因为 CGLIB 是通过生成子类来实现的，代理对象无论是赋值给接口还是实现类这两者都是代理对象的父类。
+
+
+一、原理区别：
+java动态代理是利用反射机制生成一个实现代理接口的匿名类，在调用具体方法前调用InvokeHandler来处理。
+而cglib动态代理是利用asm开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类,重写拦截方法处理。
+
+https://www.cnblogs.com/leifei/p/8263448.html
+
+
+三种aop框架对比
+框架	代理机制	作用时间范围	作用原理	优点	缺点	使用频率
+AspectJ	静态代理	编译期	编译期嵌入代码	运行速度最快	扩展性差, 无法在运行时创建新代理	不常用
+JDK动态代理	动态代理	运行时	被代理类加载进jvm之后, 根据声明的统一接口动态生成代理类, 同时将切面逻辑织入代理类, 也称为java的反射机制	代理类生成速度快	1.需要声明统一代理接口 , 扩展性相对CGLIB差2.相对于直接调用来说, 切面逻辑运行速度慢 3.使用大量反射如果不释放代理对象的引用, 会造成GC负荷大	不常用
+CGLIB	动态代理	运行时	通过字节码框架ASM动态生成子类, 重写父类方法, 同时嵌入切面逻辑	1.切面逻辑运行速度快 2.被代理类无需实现统一接口 3.扩展性强	1.代理类生成代价高 2.文档少, 难以深入学习 3.使用大量反射如果不释放代理对象的引用, 会造成GC负荷大	常
+
+https://www.jianshu.com/p/5cfe2db57382
+
+
+FastClass机制
+在JDK动态代理中，调用目标对象的方法使用的是反射，而在CGLIB动态代理中使用的是FastClass机制。
+• FastClass使用：动态生成一个继承FastClass的类，并向类中写入委托对象，直接调用委托对象的方法。
+• FastClass逻辑：在继承FastClass的动态类中，根据方法签名(方法名字+方法参数)得到方法索引，根据方法索引调用目标对象方法。
+• FastClass优点：FastClass用于代替Java反射，避免了反射造成调用慢的问题。
+
+来自 <https://tech.souyunku.com/?p=19699> 
+
+FastClass
+	FastClass不使用反射类（Constructor或Method）来调用委托类方法，而是动态生成一个新的类（继承FastClass），向类中写入委托类实例直接调用方法的语句，用模板方式解决Java语法不支持问题，同时改善Java反射性能。
+	动态类为委托类方法调用语句建立索引，使用者根据
+
+作者：毛小力
+链接：https://www.jianshu.com/p/0604d79435f1
+来源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+
+
+
+
+
+
+
+
+
+
+
+
