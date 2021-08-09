@@ -1,0 +1,28 @@
+failed to execute /bin/bash: Resource temporarily unavailable（Linux系统root无法通过su切换到某个普通用户）
+
+
+
+[root@127.0.0.1 config]# su - mform
+Last login: Mon Apr 16 14:08:05 CST 2018 on pts/4
+su: Failed to execute /bin/bash: Resource temporarily unavailable
+[root@127.0.0.1 config]#
+[root@127.0.0.1 config]#
+[root@127.0.0.1 config]# egrep -v "^$|^#" /etc/security/limits.d/20-nproc.conf
+* soft nproc 4096
+root soft nproc unlimited
+[root@127.0.0.1 config]# su - mform
+Last login: Mon Apr 16 14:16:25 CST 2018 on pts/4
+su: Failed to execute /bin/bash: Resource temporarily unavailable
+[root@127.0.0.1 config]#
+[root@127.0.0.1 config]#
+[root@127.0.0.1 config]#
+#将默认值4096改为8192
+[root@127.0.0.1 config]# vim /etc/security/limits.d/20-nproc.conf
+[root@127.0.0.1 config]# egrep -v "^$|^#" /etc/security/limits.d/20-nproc.conf
+* soft nproc 8192root soft nproc unlimited[root@127.0.0.1 config]# su - mformLast login: Mon Apr 16 14:16:49 CST 2018 on pts/4[mform@127.0.0.1 ~]$ iduid=1002(mform) gid=1003(mform) groups=1003(mform)
+
+来自 <https://www.jb51.cc/bash/388228.html> 
+
+
+
+https://www.jb51.cc/bash/388228.html
