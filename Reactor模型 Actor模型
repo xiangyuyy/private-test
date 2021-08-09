@@ -1,0 +1,53 @@
+NIO学习--Reactor模型
+
+来自 <https://blog.csdn.net/qq924862077/article/details/81026740> 
+
+
+多线程时代   redis单线程
+	• 单线程性能瓶颈主要在网络IO上。
+	• 将网络数据读写和协议解析通过多线程的方式来处理 ，对于命令执行来说，仍然使用单线程操作。
+
+来自 <https://blog.csdn.net/weixin_39647412/article/details/111618042> 
+
+
+
+背景
+最近准备接手公司的消息系统，消息是系统是vert.x写的。突然觉得好懵逼，vert.x以前只听过名字，根本不知道是干啥的。然后开始了疯狂学习。此文是在学习vert.x过程中学到的知识。vert.x是一个reactor模型，actor模型。今天就给大家讲讲什么是reactor，actor模型。
+传统模型
+image
+这种模式是传统设计，每一个请求到来时，大致都会按照：请求读取->请求解码->服务执行->编码响应->发送答复 这个流程去处理。服务器会分配一个线程去处理，如果请求暴涨起来，那么意味着需要更多的线程来处理该请求。若请求出现暴涨，线程池的工作线程数量满载那么其它请求就会出现等待或者被抛弃。若每个小任务都可以使用非阻塞的模式，然后基于异步回调模式。这样就大大提高系统的吞吐量。这样就引入啦
+Reactor模型
+参考资料http://gee.cs.oswego.edu/dl/cpjslides/nio.pdf 
+简介
+Reactor模型又称为Reactor设计模式，这个模式是从NIO中出来的，是一种基于事件驱动模型的设计模式。
+Reactor中的组件
+Reactor:请求的派发者。
+Acceptor:Acceptor接受client连接，一旦有请求过来，则直接将请求发送给Reactor。
+单Reactor单线程模型
+image
+从上图可以看出。这个模型没有区别阻塞任何和非阻塞任务，如果任务阻塞需要客户端等待最终的执行结果。
+单Reactor多线程模型
+image
+这种模型就是现在成熟的Reactor模式。但是请求进一步增加的时候，Reactor会出现瓶颈。因为Reactor既要处理IO操作请求，又要响应连接请求！为了分担Reactor的负担，所以引入了主从Reactor模型。
+多线程多Reactor模型
+image
+主Reactor用于响应连接请求，从Reactor用于处理IO操作请求。
+Actor模型
+简介
+博主实在不知道怎么去描述Actor模型，这段内容摘抄http://jolestar.com/parallel-programming-model-thread-goroutine-actor
+对没接触过这个概念的人可能不太好理解，Actor的概念其实和OO里的对象类似，是一种抽象。面对对象编程对现实的抽象是对象=属性+行为（method），但当使用方调用对象行为（method）的时候，其实占用的是调用方的CPU时间片，是否并发也是由调用方决定的。这个抽象其实和现实世界是有差异的。现实世界更像Actor的抽象，互相都是通过异步消息通信的。比如你对一个美女say hi，美女是否回应，如何回应是由美女自己决定的，运行在美女自己的大脑里，并不会占用发送者的大脑。
+Actor特征
+Processing – actor可以做计算的，不需要占用调用方的CPU时间片，并发策略也是由自己决定。
+Storage – actor可以保存状态
+Communication – actor之间可以通过发送消息通讯
+Actor遵循规则
+发送消息给其他的Actor
+创建其他的Actor
+接受并处理消息，修改自己的状态
+Actor的目标
+Actor可独立更新，实现热升级。因为Actor互相之间没有直接的耦合，是相对独立的实体，可能实现热升级。
+无缝弥合本地和远程调用 因为Actor使用基于消息的通讯机制，无论是和本地的Actor，还是远程Actor交互，都是通过消息，这样就弥合了本地和远程的差异。
+容错 Actor之间的通信是异步的，发送方只管发送，不关心超时以及错误，这些都由框架层和独立的错误处理机制接管。
+易扩展，天然分布式 因为Actor的通信机制弥合了本地和远程调用，本地Actor处理不过来的时候，可以在远程节点上启动Actor然后转发消息过去。
+
+链接：https://www.jianshu.com/p/df42d1a26a69
