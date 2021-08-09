@@ -1,0 +1,15 @@
+nginx配置高可用集群
+
+（1）需要两个 nginx 服务器
+（2）需要 keepalived
+（3）需要虚拟 ip
+
+来自 <https://zhuanlan.zhihu.com/p/285381076> 
+
+
+Keepalived
+
+
+Keekpalived工作原理：通过vrrp协议实现
+
+来自 <https://www.jianshu.com/p/a6b5ab36292a> 
