@@ -1,0 +1,64 @@
+osc_bmrl02u3
+2020/08/19 15:26
+阅读数 111
+简介
+在面试的时候就会经常问到，arrylist安全吗
+arraylist是线程不安全的我们都知道，但是具体为什么arraylist是不安全的线程，大部分人都不怎么了解
+list接口下满有两个实现，一个是arraylist，另外一个是vector
+从源码的角度来看，因为vector的方法前加了synchronize关键字，设计的时候希望vector是线程安全的，而希望arrylist是高校的（安全和高效不能兼顾）
+
+
+不安全的案例
+在多个线程进行add操作时可能会导致elementData数组越界
+public class UnSageList {
+    public static void main(String[] args) {
+ArrayList<String> arrayList = new ArrayList<>();
+        for (int i = 0; i < 10000; i++) {
+            new Thread(() -> arrayList.add(Thread.currentThread().getName())).start();
+        }
+try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+System.out.println(arrayList.size());
+    }
+}
+正常情况下，遍历10000次list的size应该是10000，但是基本上是不可能达到10000的
+原因：
+在多个线程进行add操作会，触发数组扩容，在扩容的时候可能会发生数据的覆盖
+加入现在minCapacity为10，假设已经添加了9个数据，size是9，接下来添加数据就需要进行扩容操作
+1. 线程a执行完add函数的ensureCapacityInternal(size + 1)中的ensureExplicitCapacity操作，发现需要扩容，于是进行了grow扩容操作
+2. 这个时候线程b开始执行add操作，但是检验发现数组不需要扩容于是执行add中的elementData[size++] = e操作，把数字放到了9的位置，然后size++，这个时候size为10
+3. 线程a接着执行，尝试数字放到9的位置（因为在线程a中，a的数据还没有更新），这个时候就造成了数据的覆盖，丢失了一个数据
+解释一下为什么会发生重复添加到一个位置
+​ Java线程模型由主内存和工作内存组成：
+
+说明：
+1. 工作内存和主内存两部分一起组成Java线程的内存模型
+2. 工作内存是属于线程的，不同线程的工作内存之间不可共享，不可通讯
+3. 工作内存通过load操作从主内存中读取数据，通过save操作将数据写入主内存
+4. 线程之间的通讯：本质上是通过主内存的数据共享
+所以多个线程可能同时加载到了一个size数据，但是线程a在进行扩容操作后，还没有完成赋值和size++的操作，另外的一个线程b就进行了add操作，发现不需要扩容就直接赋值，当线程a在进行赋值操作的时候就会发生数据覆盖
+让线程安全
+加上synchronized 块
+public class UnSageList {
+    public static void main(String[] args) {
+        ArrayList<String> arrayList = new ArrayList<>();
+        for (int i = 0; i < 10000; i++) {
+            new Thread(() -> {
+                synchronized (arrayList){
+                    arrayList.add(Thread.currentThread().getName());
+                }
+            }).start();
+        }
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println(arrayList.size());
+    }
+}
+
+来自 <https://my.oschina.net/u/4398140/blog/4512867> 
