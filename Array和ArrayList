@@ -1,0 +1,8 @@
+可以将 ArrayList想象成一种“会自动扩增容量的Array”。
+
+2）Array（[]）：最高效；但是其容量固定且无法动态改变；
+     ArrayList：  容量可动态增长；但牺牲效率；
+
+3）建议：
+基于效率和类型检验，应尽可能使用Array，无法确定数组大小时才使用ArrayList！
+https://blog.csdn.net/ywjy10280915/article/details/82721062
