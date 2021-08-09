@@ -1,0 +1,26 @@
+ZAB协议选主过程详解
+
+来自 <https://zhuanlan.zhihu.com/p/27335748> 
+
+总结
+使用日志实现分布式系统一致性的方案中，日志代表了系统中发生的事件，而日志存在两种状态：
+• 发起（Proposal）：日志已经被记录在Leader/Follower的日志文件中，相当于节点已经记录了该事件；
+• 提交（Commit）：一旦事件被多数节点记录，Leader节点便提交该日志，即处理事件。事件被处理完成后，Leader才会给予客户端答复，后续，Leader节点同样会将该Commit命令通知Follower节点。
+一旦日志被提交，那么在客户端看来事件已经被系统处理，那该事件产生的状态就不能凭空消失，因此，在选主协议中最重要的两点保证是：
+• 已经被处理的消息不能丢
+• 被丢弃的消息不能再次出现
+已经被处理的消息不能丢
+这一情况会出现在以下场景：当 leader 收到合法数量 follower 的 ACKs 后，就向各个 follower 广播 COMMIT 命令，同时也会在本地执行 COMMIT 并向连接的客户端返回「成功」。但是如果在各个 follower 在收到 COMMIT 命令前 leader 就挂了，导致剩下的服务器并没有执行都这条消息。
+
+如图，消息 1 的 COMMIT命令C1在 Server1（Leader）和 Server2（Follower）上执行了，但是在Server3收到消息C1之前Server1便挂了，客户端很可能已经收到消息1已经成功执行的回复，协议需要保证重新选主后，C1消息不会丢失。
+为了实现该目的，Zab选主时使用以下的策略：
+选择拥有 proposal 最大值（即 zxid 最大） 的节点作为新的 Leader。
+由于所有提案被COMMIT 之前必须有大多数量的 Follower ACK，即大多数服务器已经将该 proposal写入日志文件。因此，新选出的Leader如果满足是大多数节点中proposal最多的，它就必然存有所有被COMMIT消息的proposal。
+接下来，新Leader与Follower 建立先进先出的队列， 先将自身有而Follower缺失的proposal发送给 它，再将这些 proposal的COMMIT命令发送给 Follower，这便保证了所有的Follower都保存了所有的 proposal、所有的Follower 都处理了所有的消息。
+通过以上策略，能保证已经被处理的消息不会丢
+被丢弃的消息不能再次出现
+这一情况会出现在以下场景：当Leader 接收到消息请求生成 proposal后就挂了，其他Follower 并没有收到此proposal，因此新选出的Leader中必然不含这条消息。 此时，假如之前挂了的Leader 重新启动并注册成了Follower，它要与新的Leader保持一致，就必须要删除自己上旧的proposal。
+Zab 通过巧妙的设计 zxid 来实现这一目的。一个 zxid 是64位，高 32 是纪元（epoch）编号，每经过一次 Leader选举产生一个新的Leader，其epoch 号 +1。低 32 位是消息计数器，每接收到一条消息这个值 +1，新Leader 选举后这个值重置为 0。
+这样设计的目的是即使旧的Leader 挂了后重启，它也不会被选举为Leader，因为此时它的zxid 肯定小于当前的新Leader。另外，当旧的Leader 作为Follower提供服务，新的Leader也会让它将所有多余未被COMMIT的proposal清除。
+
+来自 <https://zhuanlan.zhihu.com/p/27335748> 
