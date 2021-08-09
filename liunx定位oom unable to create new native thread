@@ -1,0 +1,30 @@
+
+top -H  可查当前所有的线程数
+
+来自 <https://blog.csdn.net/weixin_34443842/article/details/114743724> 
+
+
+ps -xH |wc -l  查看进程总数
+
+pstree -p |wc -l    查看线程总数
+
+pstree -p 55346 |wc -l 某个线程总数
+
+ulimit -a  查看  max user processes 系统最大线程数
+
+来自 <https://www.xttblog.com/?p=3360> 
+
+top -H -p 55346  线程详情
+
+cat /proc/55346/status  线程详情
+
+cat /etc/security/limits.d/20-nproc.conf  具体某个用户最多能创建的线程
+
+
+
+
+opensta+ 用户启动的java  线程数大于了 4096 
+
+
+
+用户线程数不足 导致。
