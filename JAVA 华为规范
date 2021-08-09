@@ -1,0 +1,22 @@
+CollectionUtils.isEmpty
+
+Objects.isNull()
+
+isEmpty()
+
+统一驼峰命令
+
+统一格式   空格 逗号统一。
+
+代码要包含异常处理逻辑的全面性考虑。
+
+optJSONObject  不然page_info不存在会异常报错。
+JSONObject   pageInfo =  respBodyJson.optJSONObject("page_info");
+
+
+对于返回数组或者容器的方法，应返回长度为0的数组或 者容器，代替返回null
+ 
+
+
+
+
