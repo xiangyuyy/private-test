@@ -1,0 +1,18 @@
+
+总结：THreadLocalMap中的Entry的key使用的是ThreadLocal对象的弱引用，在没有其他地方对ThreadLoca依赖，ThreadLocalMap中的ThreadLocal对象就会被回收掉，但是对应的不会被回收，这个时候Map中就可能存在key为null但是value不为null的项，这需要实际的时候使用完毕及时调用remove方法避免内存泄漏。
+
+来自 <https://www.cnblogs.com/fsmly/p/11020641.html> 
+
+
+
+
+line1新建了一个ThreadLocal对象，t1 是强引用指向这个对象；line2调用set（）后，新建一个Entry，通过源码可知entry对象里的 k是弱引用指向这个对象。如图：
+
+ 
+当func1方法执行完毕后，栈帧销毁，强引用 tl 也就没有了，但此时线程的ThreadLocalMap里某个entry的 k 引用还指向这个对象。若这个k 引用是强引用，就会导致k指向的ThreadLocal对象及v指向的对象不能被gc回收，造成内存泄漏，但是弱引用就不会有这个问题（弱引用及强引用等这里不说了）。使用弱引用，就可以使ThreadLocal对象在方法执行完毕后顺利被回收，而且在entry的k引用为null后，再调用get,set或remove方法时，就会尝试删除key为null的entry，可以释放value对象所占用的内存。
+概括说就是：在方法中新建一个ThreadLocal对象，就有一个强引用指向它，在调用set（）后，线程的ThreadLocalMap对象里的Entry对象又有一个引用 k 指向它。如果后面这个引用 k 是强引用就会使方法执行完，栈帧中的强引用销毁了，对象还不能回收，造成严重的内存泄露。
+ 
+注意：虽然弱引用，保证了k指向的ThreadLocal对象能被及时回收，但是v指向的value对象是需要ThreadLocalMap调用get、set时发现k为null时才会去回收整个entry、value，因此弱引用不能保证内存完全不泄露。我们要在不使用某个ThreadLocal对象后，手动调用remoev方法来删除它，尤其是在线程池中，不仅仅是内存泄露的问题，因为线程池中的线程是重复使用的，意味着这个线程的ThreadLocalMap对象也是重复使用的，如果我们不手动调用remove方法，那么后面的线程就有可能获取到上个线程遗留下来的value值，造成bug。
+
+来自 <https://www.cnblogs.com/shen-qian/p/12108655.html> 
+
