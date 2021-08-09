@@ -1,0 +1,15 @@
+NioSocket
+从JDK1.4开始，java增加了新的io模式——nio,nio在底层采用了新的处理方式，极大的提高了IO的效率。我们使用的Socket也属于IO的一种，nio提供了相应的工具：ServerSocketChannel和SocketChannel,它们分别对应原来的ServerSocket和Socket。
+要理解NioSocket的使用必须先理解三个概念：Buffer、Channel和Selector。举个例子。大学时有人卖电话卡，提供送货上门服务，只要有人打电话，他就送过去、收钱在回去，然后等下一个电话，这就相当于普通的Socket处理请求的模式。如果请求不是很多，这是没有问题的。而像现在的电商配送模式——送快递就类似于NioSocket。快递并不会一件一件的送，而是将很多件货一起拿去送，而且在中转站都有专门的分拣员负责按配送范围把货物分给不同的送货员，这样效率就提高了很多。Buffer就是所要送的货物，Channel就是送货员（或者开往某个区域的配货车），Selector就是中转战的分拣员
+————————————————
+版权声明：本文为CSDN博主「Amaranth007」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+
+
+https://blog.csdn.net/weixin_40096176/article/details/80040204
+
+
+因为NIO是按Block来读取数据的，这个一个Block就可以看做是一个Buffer。我们在Buffer中存储要读取的数据和要写入的数据，通过Buffer来提高读取和写入的效率。
+
+来自 <https://segmentfault.com/a/1190000022886759> 
+
+
