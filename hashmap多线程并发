@@ -1,0 +1,45 @@
+
+https://blog.csdn.net/paincupid/article/details/51241783
+
+
+
+
+(2)并发的Rehash过程
+（1）假设我们有两个线程。我用红色和浅蓝色标注了一下。我们再回头看一下我们的 transfer代码中的这个细节：
+
+do {
+    Entry<K,V> next = e.next; // <--假设线程一执行到这里就被调度挂起了
+    int i = indexFor(e.hash, newCapacity);
+    e.next = newTable[i];
+    newTable[i] = e;
+    e = next;
+} while (e != null);
+ 而我们的线程二执行完成了。于是我们有下面的这个样子。
+
+
+
+ 
+
+注意：因为Thread1的 e 指向了key(3)，而next指向了key(7)，其在线程二rehash后，指向了线程二重组后的链表。我们可以看到链表的顺序被反转后。
+
+（2）线程一被调度回来执行。
+
+先是执行 newTalbe[i] = e。
+然后是e = next，导致了e指向了key(7)。
+而下一次循环的next = e.next导致了next指向了key(3)。
+
+
+ (3)再接下来
+ 线程一接着工作。把key(7)摘下来，放到newTable[i]的第一个，然后把e和next往下移。
+
+
+
+ （4）环形链接出现
+e.next = newTable[i] 导致 key(3).next 指向了 key(7)。注意：此时的key(7).next 已经指向了key(3)， 环形链表就这样出现了。 
+
+
+
+ 于是，当我们的线程一调用到，HashTable.get(11)时，悲剧就出现了——Infinite Loop
+————————————————
+版权声明：本文为CSDN博主「lbxxzt」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/weixin_42504145/article/details/84329752
