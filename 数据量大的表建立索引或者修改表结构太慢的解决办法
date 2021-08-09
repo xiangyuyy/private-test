@@ -1,0 +1,18 @@
+数据量大的表建立索引或者修改表结构太慢的解决办法
+
+诺浅 2020-04-26 09:04:42  1507  收藏
+文章标签： sql 数据库 大表加索引
+版权
+缘起
+当表数据量很大时，建立索引或者修改表结构会很慢，而且在操作的过程中，数据库甚至处于死锁状态，那么有没有其他的好的办法呢？
+
+解决方案
+create table tableB like tableA;
+create index idx_tableA_cA on tableB(columnA);
+insert into tableB
+select * from tableA;
+drop table tableA;
+rename table tableB to tableA
+————————————————
+版权声明：本文为CSDN博主「诺浅」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/qq32933432/article/details/105761658
