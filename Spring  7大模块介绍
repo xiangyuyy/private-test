@@ -1,0 +1,20 @@
+ 
+提供一个轻量高效的java开发框架
+7大模块介绍：
+
+Spring core：它是spring的核心模块、提供的对Spring框架的基本支持；Spring Core中提供控制反转（IOC）和依赖注入（DI）对项目中的对象进行集中的创建以及管理，其中IOC用于通过<bean>来管理任一对象的创建、初始化、销毁以及对象的生命周期，它的本质是对象的创建交给配置文件来完成；DI是用于管理对象之间的关系，本质是建立对象之间的逻辑关系；
+
+Spring Context：通过配置文件的方式向spring提供上下文服务，如JNDI、国际化、校验等。
+
+Spring Aop：Spring Aop模块提供的对面向切面编程的支持，支持JDK和CGLib两种字节码操作方式，可以实现对Spring管理的任意对象的AOP支持。
+
+Spring ORM：提供了对ORM框架的集成，如Hibernate、Ibatis、Mybatis；
+
+Spring Dao：是Spring提供的对数据库访问的支持，通过spring Dao对jdbc的进一步封装，统一了异常结构用于管理不同数据库厂商产品抛出的错误信息，简化了对异常信息的处理；
+
+Spring Web MVC：是Spring提供的一个web的MVC框架,提供了对Controller、Service、View等组件的管理，其中View层通过不同的视图解析器支持不同的视图技术，如jsp、freeMarker等；
+
+Spring Web：spring的web模块,提供WebApplication上下文信息,实现文件上传、数据绑定以及其它Web框架的集成；
+————————————————
+版权声明：本文为CSDN博主「行_天下」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/qq_36097039/article/details/84922448
