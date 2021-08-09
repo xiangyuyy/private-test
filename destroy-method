@@ -1,0 +1,38 @@
+spring的生命周期:init-method和destroy-method.(以及初始前后代理测试)
+* Bean的生命周期
+* init-method:初始化的时候执行的方法:
+*destroy-method:销毁的时候执行的方法:
+* Bean生成必须是单例的.在工厂关闭的时候销毁.
+但是关闭必须手动执行手动销毁的方法.也就是applicationContext.closed()
+
+Bean的完整的生命周期有十一个步骤:
+1.instantiate bean对象实例化（初始化）
+2.populate properties 封装属性（属性的注入）
+3.如果Bean实现BeanNameAware 执行 setBeanName（配置Spring中的id或者name）
+4.如果Bean实现BeanFactoryAware 或者 ApplicationContextAware 设置工厂 setBeanFactory 或者上下文对象 setApplicationContext
+5.如果存在类实现 BeanPostProcessor（后处理Bean） ，执行postProcessBeforeInitialization（执行初始化之前执行的方法）(AOP底层)
+6.如果Bean实现InitializingBean 执行 afterPropertiesSet （属性注入完成）
+7.调用<bean init-method="init"> 指定初始化方法 init
+8.如果存在类实现 BeanPostProcessor（处理Bean） ，执行postProcessAfterInitialization（执行初始化之后执行的方法）(AOP底层)
+9.执行业务处理
+10.如果Bean实现 DisposableBean 执行 destroy
+11.调用<bean destroy-method="customerDestroy"> 指定销毁方法 customerDestroy
+
+* 第三步和第四步:让JavaBean了解Spring的容器.
+***** 第五步和第八步非常重要:
+BeanPostPorcessor:在Bena的实例化的过程中对Bean进行增强. （需要自己配置，配置不需要配ID，也叫后处理Bean，Spring 底层会自动调）
+* Factory hook that allows for custom modification of new bean instances, e.g. checking for marker interfaces or wrapping them with proxies. 
+
+* 增强一个Bean中某个方法需要几种方式:
+* 继承:
+* 能够控制这类的构造!!!，这个类你可以自己去new它或者你自己能提供这个类
+* 装饰者模式:
+* 被增强类和增强类实现相同的接口.
+* 在增强的类中获得到被增强类的引用.
+***** 缺点:接口中方法太多.其他都需要原封调用.
+
+* 动态代理:(灵活)
+* JDK动态代码:类实现接口.
+* 对实现接口的类产生代理.
+
+来自 <http://www.voidcn.com/article/p-drkzlqpb-boo.html> 
