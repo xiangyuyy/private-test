@@ -2,6 +2,10 @@
 
 拉取最新代码
 
-Git->merge changes 选择要合并的分支
+切换到开发分支   选择master 右键   merge into current  解决冲突 push 到远程分支。
+
+
+
+遗弃   Git->merge changes 选择要合并的分支
 
 切换到开发分支 提交代码
