@@ -1,5 +1,6 @@
 
 
+2021-08-16T10:08:50.236+0800|INFO|ForkJoinPool-1-worker-84|c.h.e.m.kafka.service.BaseService.quarkGET(75)|41102e0b-231c-40fc-a5c5-b7e361cd1f0f|Got data from [QUARK] 
 
 
 <?xml version="1.0" encoding="UTF-8"?>
