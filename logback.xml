@@ -1,0 +1,126 @@
+
+
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds" >
+    <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径 -->
+    <property name="LOG_HOME" value="/var/log/fusionsphere/component/elb-v3-controller" />
+
+    <conversionRule conversionWord="msg" converterClass="org.elb.common.log.SensitiveInfoMessageConverter" />
+    <!-- 控制台输出 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %M：方法名 %L：行号 %msg：日志消息，%n是换行符-->
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXX}|%level|%thread|%logger{36}.%M\(%L\)|%X{traceId}|%msg%n</pattern>
+        </encoder>
+    </appender>
+    <!-- 按照每天生成日志文件 -->
+    <appender name="FILE"
+              class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_HOME}/elb-v3-controller.log</file>
+        <encoder
+                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %M：方法名 %L：行号 %msg：日志消息，%n是换行符 -->
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXX}|%level|%thread|%logger{36}.%M\(%L\)|%X{traceId}|%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ACCESS"
+              class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_HOME}/elb-v3-controller-access.log</file>
+        <encoder
+                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %M：方法名 %L：行号 %msg：日志消息，%n是换行符 -->
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXX}|%level|%thread|%logger{36}.%M\(%L\)|%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="KAFKA"
+              class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_HOME}/elb-v3-controller-kafka.log</file>
+        <encoder
+                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %M：方法名 %L：行号 %msg：日志消息，%n是换行符 -->
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXX}|%level|%thread|%logger{36}.%M\(%L\)|%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="KAFKA_MESSAGE"
+              class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_HOME}/elb-v3-controller-kafka-flow.log</file>
+        <encoder
+                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %M：方法名 %L：行号 %msg：日志消息，%n是换行符 -->
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXX}|%level|%thread|%logger{36}.%M\(%L\)|%msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+	<appender name="REDIS"
+              class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_HOME}/elb-v3-controller-redis.log</file>
+        <encoder
+                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %M：方法名 %L：行号 %msg：日志消息，%n是换行符 -->
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXX}|%level|%thread|%logger{36}.%M\(%L\)|%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="CONTROLLER_MESSAGE"
+              class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_HOME}/elb-v3-controller-flow.log</file>
+        <encoder
+                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度 %M：方法名 %L：行号 %msg：日志消息，%n是换行符 -->
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXX}|%level|%thread|%logger{36}.%M\(%L\)|%X{traceId}|%msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.elb.manager.service.BaseService" level="DEBUG"
+            additivity="true">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="ACCESS" />
+    </logger>
+
+    <logger name="org.apache.kafka" level="INFO" additivity="true">
+        <appender-ref ref="KAFKA" />
+         <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="org.apache.http" level="INFO" additivity="true">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="ACCESS" />
+    </logger>
+
+	<logger name="io.lettuce.core" level="INFO" additivity="true">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="REDIS" />
+    </logger>
+
+    <logger name="org.springframework.kafka" level="INFO"
+            additivity="false">
+        <appender-ref ref="KAFKA" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="messageProcessFlow-controller" level="DEBUG"
+            additivity="false">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="CONTROLLER_MESSAGE" />
+    </logger>
+
+    <logger name="messageProcessFlow-kafka" level="DEBUG"
+            additivity="false">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="KAFKA_MESSAGE" />
+        <appender-ref ref="FILE" />
+    </logger>
+    <logger name="org.springframework" level="ERROR"/>
+    <!-- 日志输出级别 -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>
