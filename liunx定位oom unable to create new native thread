@@ -28,3 +28,7 @@ opensta+ 用户启动的java  线程数大于了 4096
 
 
 用户线程数不足 导致。
+
+
+
+zgrep "GET data to " /var/log/fusionsphere/component/elb-v3-controller/* |grep  'tenant-versions'
