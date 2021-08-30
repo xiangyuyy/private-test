@@ -1,0 +1,22 @@
+1前言
+通过Application Events and Listeners这篇，springboot启动过程产生的６种事件.通过ApplicationReadyEvent事件可以实现系统启动完后做一些系统初始化的操作．接下来讲讲通过ApplicationRunner(CommandLineRunner也类似)这种方式也可以实现同样的功能．
+
+2实现
+定义一个类SimosApplicationRunner实现ApplicationRunner接口，然后Override这个ApplicationRunner接口的run方法，就搞定了.代码如下:
+
+/**
+ * Created by l2h on 18-4-16.
+ * Desc: 系统启动完可以做一些业务操作
+ * @author l2h
+ */
+@Component
+//如果有多个runner需要指定一些顺序
+@Order(1)
+public class SimosApplicationRunner implements ApplicationRunner {
+@Autowired
+SystemInitService systemInitService;
+@Override
+public void run(ApplicationArguments args) throws Exception {
+    systemInitService.systemInit();
+}
+}
