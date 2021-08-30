@@ -1,0 +1,15 @@
+聊聊数据库乐观锁和悲观锁，乐观锁失败后重试
+　　在写入数据库的时候需要有锁，比如同时写入数据库的时候会出现丢数据，那么就需要锁机制。
+
+　　数据锁分为乐观锁和悲观锁，那么它们使用的场景如下：
+
+　　1. 乐观锁适用于写少读多的情景，因为这种乐观锁相当于JAVA的CAS，所以多条数据同时过来的时候，不用等待，可以立即进行返回。
+
+　　2. 悲观锁适用于写多读少的情景，这种情况也相当于JAVA的synchronized，reentrantLock等，大量数据过来的时候，只有一条数据可以被写入，其他的数据需要等待。执行完成后下一条数据可以继续。
+
+　　他们实现的方式上有所不同，乐观锁采用版本号的方式，即当前版本号如果对应上了就可以写入数据，如果判断当前版本号不一致，那么就不会更新成功，比如 update table set column = value where version=${version} and otherKey = ${otherKey}。悲观锁实现的机制一般是在执行更新语句的时候采用for update方式，比如 update table set column='value' for update。这种情况where条件呢一定要涉及到数据库对应的索引字段，这样才会是行级锁，否则会是表锁，这样执行速度会变慢。
+
+　　下面我就弄一个spring boot（springboot 2.1.1 + mysql + lombok + aop + jpa）工程，然后逐渐的实现乐观锁和悲观锁。假设有一个场景，有一个catalog商品目录表，然后还有一个browse浏览表，假如一个商品被浏览了，那么就需要记录下浏览的user是谁，并且记录访问的总数。
+  
+  
+  https://www.cnblogs.com/huangqingshi/p/10165409.html
