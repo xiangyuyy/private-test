@@ -1,0 +1,29 @@
+Spring初始化之ApplicationRunner、InitializingBean、@PostConstruct执行顺序问题
+前言
+一、ApplicationRunner 接口的用法
+二、InitializingBean接口的用法
+三、@PostConstruct注解的用法
+三者在Spring项目启动的执行顺序：
+前言
+因为要用到Spring的初始化加载bean，比如Spring上下文的获取类应该优先加载，监听什么的类应该在启动后加载，所以考虑先后顺序，所以研究一下ApplicationRunner、InitializingBean、@PostConstruct的执行先后顺序问题
+
+一、ApplicationRunner 接口的用法
+ApplicationRunner ： 是一个接口，里面定义一个run(ApplicationArguments args)方法,我们需要自己写一个类去实现这个这接口,并实现接口里面的run(ApplicationArguments args)方法。
+
+二、InitializingBean接口的用法
+InitializingBean接口为bean提供了初始化方法的方式，它只包括afterPropertiesSet方法，凡是继承该接口的类，在初始化bean的时候都会执行该方法。注意，实现该接口的最好加上Spring的注解注入，比如@Component
+
+三、@PostConstruct注解的用法
+如果想在生成对象时候完成某些初始化操作，而偏偏这些初始化操作又依赖于依赖注入，那么就无法在构造函数中实现。为此，可以使用@PostConstruct注解一个方法来完成初始化，@PostConstruct注解的方法将会在依赖注入完成后被自动调用。
+优先级：
+Constructor >> @Autowired >> @PostConstruct
+具体请参考：@PostConstruct注解的使用
+
+三者在Spring项目启动的执行顺序：
+
+由此可知： @PostConstruct>InitializingBean>ApplicationRunner
+
+所以各位使用的时候当心了， 使用不当容易造成未知的问题哦！
+————————————————
+版权声明：本文为CSDN博主「执笔记忆的空白」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/moneyshi/article/details/108864172
